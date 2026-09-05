@@ -20,7 +20,7 @@ A native Git version control plugin for the DeepSeek Harness Web GUI (`dsh web`)
 - **Diff View**:
   - Click any file in the changes list to see its diff in the right panel;
   - Unified format with highlighted added/deleted lines.
-- **Branch management**: the toolbar always shows the current branch — switch (checkout), create from current HEAD, **merge** the picked branch into the current one, **delete** a branch (`-d` when merged; unmerged/conflicting states surface git's error), **pull** upstream and **push** the current branch.
+- **Branch management**: the toolbar always shows the current branch — switch (checkout), create a branch (based on the branch picked in the toolbar dropdown, or the current HEAD when none is picked), **merge** the picked branch into the current one, **delete** a branch (`-d` when merged; unmerged/conflicting states surface git's error), **pull** upstream and **push** the current branch.
 - **AI-generated commit message**: the **✨ Generate** button in the commit area calls the DSH host LLM service with the currently checked changes (editable afterwards).
   - Rules (nearest wins): `<workspaceRoot>/.dsh/rules/git-commit-rules.md` → `~/.dsh/rules/git-commit-rules.md` (`$DSH_HOME` first) → built-in Conventional Commits default;
   - Model follows the deployment default (session model catalog / `LLM_API_*` / deepseek fallback); diff input has total/per-file budgets with truncation notices; if the host exposes no LLM the button is disabled with a friendly note — manual entry always works.

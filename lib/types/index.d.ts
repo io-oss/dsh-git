@@ -45,7 +45,7 @@ export interface RepoRequest { repoPath: string }
 export interface LogRequest extends RepoRequest { maxCount?: number }
 export interface DiffRequest extends RepoRequest { filePath: string; staged?: boolean }
 export interface CommitRequest extends RepoRequest { message: string; files?: string[]; all?: boolean; stage?: string[]; unstage?: string[] }
-export interface BranchOpRequest extends RepoRequest { branch: string; force?: boolean }
+export interface BranchOpRequest extends RepoRequest { branch: string; force?: boolean; startPoint?: string }
 export interface AiCommitRequest extends RepoRequest { workspacePath?: string; included: string[]; provider?: string; model?: string }
 export interface AiCommitResult { ok: true; message: string } | { ok: false; error: string }
 
