@@ -18,8 +18,9 @@
   - 展示已暂存（Staged）、未暂存（Unstaged）、未跟踪（Untracked）三栏，可折叠；
   - 文件状态用不同颜色/图标区分（A 新增、M 修改、D 删除、?? 未跟踪）。
 - **文件内容对比（Diff View）**：
-  - 点击变更列表中的任意文件，在右侧面板展示差异对比；
-  - 统一格式（Unified）高亮显示增删行。
+  - 点击变更列表中的任意文件，在右侧面板展示差异对比；按列表所属分区精确定位差异来源——已暂存看 `git diff --cached`（index↔HEAD），未暂存看 `git diff`（worktree↔index）；
+  - 未跟踪文件由服务端合成"整文件新增"差异（`git diff --no-index -- /dev/null <file>`），可直接预览内容；
+  - 统一格式（Unified）高亮显示增删行；二进制、空文件或超过 1 MB 的大文件不渲染内容，改为友好提示。
 - **分支管理**：工具栏常驻显示当前分支——切换（checkout）、新建分支并切换（基点＝工具条下拉选中的分支；未选则当前 HEAD）、**合并**目标分支到当前分支、删除目标分支（已合并 `-d`，冲突/未合并报错）、**拉取**上游（pull）与**推送**当前分支（push）。
 - **AI 生成提交信息**：提交区 **✨ AI 生成提交信息** 按钮基于当前勾选的变更在宿主侧调用 DSH 的 LLM 服务生成提交信息（可再编辑）。
   - 规则约束（就近覆盖）：`<工作区根>/.dsh/rules/git-commit-rules.md` → `~/.dsh/rules/git-commit-rules.md`（`$DSH_HOME` 优先）→ 内置 Conventional Commits 默认规则；
@@ -123,7 +124,7 @@ dsh-git/
 | `status`             | `{ repoPath }`                    | `{ staged[], unstaged[], untracked[] }` |
 | `log`                | `{ repoPath, maxCount? }`         | `string`（原始 graph 输出）             |
 | `parsedLog`          | `{ repoPath, maxCount? }`         | `Commit[]`（结构化提交数据）            |
-| `diff`               | `{ repoPath, filePath, staged? }` | `string`（diff 文本）                   |
+| `diff`               | `{ repoPath, filePath, area?, staged? }` | `string`（diff 文本，area: staged/unstaged/untracked） |
 | `commit`             | `{ repoPath, message, all? }`     | `{ ok, output?, error? }`               |
 | `branches`           | `{ repoPath }`                    | `{ current, branches[] }`               |
 | `currentBranch`      | `{ repoPath }`                    | `string`                                |
@@ -146,9 +147,8 @@ dsh-git/
 ## 已知限制
 
 - Diff 为统一格式（Unified），暂不支持并排双栏（Side-by-side）；
-- 二进制文件与超大文件（>1MB）尚未做特殊检测与友好提示；
 - Graph 以纯文本/HTML 渲染，非 Canvas/SVG，超大仓库性能可能下降；
-- 提交为 `git add -A` 全量添加，暂不支持选择性暂存；
+- 选择性提交已覆盖新增/修改/删除；未暂存的重命名（R）需整体暂存后再提交；
 - 自动扫描锁定**当前选中的工作区**（当前会话 cwd，即宿主为会话记录的工作区根，与 dsh-terminal 终端默认目录一致）；仅当无法解析时才回退宿主候选根集合。
 
 ## License

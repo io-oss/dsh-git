@@ -43,7 +43,9 @@ export interface ScanRequest { workspacePath: string }
 export interface AddRepoRequest { workspacePath: string; repoPath: string }
 export interface RepoRequest { repoPath: string }
 export interface LogRequest extends RepoRequest { maxCount?: number }
-export interface DiffRequest extends RepoRequest { filePath: string; staged?: boolean }
+/** diff 区域：已暂存 / 未暂存 / 未跟踪 */
+export type DiffArea = "staged" | "unstaged" | "untracked";
+export interface DiffRequest extends RepoRequest { filePath: string; area?: DiffArea; staged?: boolean }
 export interface CommitRequest extends RepoRequest { message: string; files?: string[]; all?: boolean; stage?: string[]; unstage?: string[] }
 export interface BranchOpRequest extends RepoRequest { branch: string; force?: boolean; startPoint?: string }
 export interface AiCommitRequest extends RepoRequest { workspacePath?: string; included: string[]; provider?: string; model?: string }

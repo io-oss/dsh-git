@@ -47,6 +47,45 @@ check("status 检测未跟踪文件", r.untracked.includes("b.txt"), JSON.string
 r = await service.diff({ repoPath: tmp, filePath: "a.txt", staged: false });
 check("diff 返回差异文本", typeof r === "string" && r.includes("line2 modified"), r.slice(0, 80));
 
+// area 语义（修复点：客户端按列表分区传 area，而非用状态字母猜 staged）
+r = await service.diff({ repoPath: tmp, filePath: "a.txt", area: "unstaged" });
+check("area=unstaged 返回工作区差异", typeof r === "string" && r.includes("line2 modified"), r.slice(0, 60));
+r = await service.diff({ repoPath: tmp, filePath: "a.txt", area: "staged" });
+check("area=staged 对未暂存文件为空", r === "", JSON.stringify(r.slice(0, 40)));
+execSync("git add a.txt", { cwd: tmp });
+r = await service.diff({ repoPath: tmp, filePath: "a.txt", area: "staged" });
+check("area=staged 返回已暂存差异", typeof r === "string" && r.includes("line2 modified"), r.slice(0, 60));
+r = await service.diff({ repoPath: tmp, filePath: "a.txt", area: "unstaged" });
+check("area=unstaged 对已暂存文件为空", r === "", JSON.stringify(r.slice(0, 40)));
+execSync("git reset -q -- a.txt", { cwd: tmp });
+
+// 同一文件同时存在已暂存与未暂存改动（AM）：两个分区各取各的，不得串内容
+writeFileSync(join(tmp, "c.txt"), "c1\n");
+execSync("git add c.txt", { cwd: tmp });
+writeFileSync(join(tmp, "c.txt"), "c1\nc2\n");
+r = await service.diff({ repoPath: tmp, filePath: "c.txt", area: "staged" });
+check("AM 文件 staged 只含已暂存块", typeof r === "string" && r.includes("+c1") && !r.includes("+c2"), r.slice(0, 70));
+r = await service.diff({ repoPath: tmp, filePath: "c.txt", area: "unstaged" });
+check("AM 文件 unstaged 只含未暂存块", typeof r === "string" && r.includes("+c2") && !r.includes("+c1"), r.slice(0, 70));
+execSync("git reset -q -- c.txt", { cwd: tmp });
+
+// 未跟踪文件：git diff 本身不输出内容，需服务端合成"整文件新增"
+r = await service.diff({ repoPath: tmp, filePath: "b.txt", area: "untracked" });
+check("area=untracked 返回整文件新增差异", typeof r === "string" && r.includes("+new file") && r.includes("@@"), r.slice(0, 90));
+r = await service.diff({ repoPath: tmp, filePath: "b.txt", area: "unstaged" });
+check("未跟踪文件按 unstaged 取为空（保证分区不串）", r === "", JSON.stringify(r.slice(0, 40)));
+// 二进制 / 超大 / 空文件 → 友好提示
+writeFileSync(join(tmp, "bin.dat"), Buffer.from([0, 1, 2, 3, 0, 255, 10]));
+r = await service.diff({ repoPath: tmp, filePath: "bin.dat", area: "untracked" });
+check("未跟踪二进制文件给出提示", typeof r === "string" && r.includes("二进制"), r);
+writeFileSync(join(tmp, "big.txt"), "x".repeat(1024 * 1024 + 1));
+r = await service.diff({ repoPath: tmp, filePath: "big.txt", area: "untracked" });
+check("超大未跟踪文件给出提示", typeof r === "string" && r.includes("过大"), r);
+writeFileSync(join(tmp, "empty.txt"), "");
+r = await service.diff({ repoPath: tmp, filePath: "empty.txt", area: "untracked" });
+check("空未跟踪文件给出提示", typeof r === "string" && r.includes("空文件"), r);
+rmSync(join(tmp, "big.txt"), { force: true });
+
 r = await service.parsedLog({ repoPath: tmp, maxCount: 10 });
 check("parsedLog 返回结构化提交", Array.isArray(r) && r.length === 1, JSON.stringify(r[0] && { shortHash: r[0].shortHash, message: r[0].message, author: r[0].author }));
 
